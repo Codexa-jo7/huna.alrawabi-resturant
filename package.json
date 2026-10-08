@@ -1,0 +1,1 @@
+{"name":"huna-alrawabi","version":"1.0.0","private":true,"description":"Arabic restaurant menu and WhatsApp ordering website","scripts":{"start":"python3 -m http.server 3000 --bind 0.0.0.0","check":"node --check app.js"}}
