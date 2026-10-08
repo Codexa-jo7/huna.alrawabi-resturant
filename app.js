@@ -9,17 +9,14 @@ add('مقبلات',[['مكسيكانو سالاد',2.5],['تشيكن سيزر',2
 add('البطاطس',[['بطاطس صغير',.6],['بطاطس وسط',.8],['بطاطس كبير',1.2],['زنجر فرايز',3],['تشيزي فرايز',1.6]]);
 add('نقرشات',[['بايتس 12 حبة',2.35,'مع صوص؛ حدّد اختيارك برسالة الطلب'],['حبة وينجز',.3],['صوص باربيكيو',.4],['صوص بافلو',.4],['صوص رانش',.4],['صوص هني ماستر',.4],['صوص سويت شيلي',.4],['صوص ديناميت',.4],['صوص جارليك',.4]]);
 add('المشروبات',[['كولا محلي',.3],['عصير مش طبيعي',.15],['ماء',.3]]);
-const photos={
-'برجر لحم':['main','340% auto','9% 23%'],
-'برجر دجاج':['main','340% auto','91% 44%'],
-'سبيشل ساندويش':['main','280% auto','10% 73%'],
-'جريل ساندويش':['main','320% auto','96% 92%'],
-'مقبلات':['sides','280% auto','10% 26%'],
-'البطاطس':['sides','310% auto','92% 47%'],
-'نقرشات':['sides','300% auto','10% 66%'],
-'المشروبات':['sides','330% auto','92% 90%']};
+// One card per dish; bread, size and double options retain their original prices.
+const bundles=[[0,3],[1,4],[2,5],[6,7],[8],[9],[10],[11,12],[13,14],[15],[16],[17],[18],[19,20],[21,22],[23,24],[25,26],[27],[28],[29],[30],[31],[32,33,34],[35],[36],[37],[38],[39],[40],[41],[42],[43],[44],[45],[46],[47],[48]];
+const artwork=[['a',0],['b',0],['a',2],['b',12],['b',1],['b',2],['a',3],['a',4],['a',5],['b',4],['b',3],['a',7],['a',8],['b',5],['b',6],['b',7],['b',8],['b',9],['a',9],['a',10],['b',10],['a',11],['a',12],['b',11],['a',13],['a',14],['a',15],['b',15],['b',16],['b',17],['b',18],['b',19],['b',20],['b',21],['b',22],['b',23],['b',24]];
+const dishes=bundles.map((ids,i)=>({ids,art:artwork[i],name:menu[ids[0]].name.replace(/ — حمام| — مقلي| صغير| 100 غ/g,''),group:menu[ids[0]].group}));
+function artStyle(art){const [sheet,index]=art,n=sheet==='a'?4:5;return `--sheet:url('assets/${sheet==='a'?'food-illustrations':'food-extras'}.png');--grid:${n};--x:${(index%n)*100/(n-1)}%;--y:${Math.floor(index/n)*100/(n-1)}%`;}
 let category='الكل';const cart=new Map();const $=s=>document.querySelector(s);const money=n=>n.toFixed(2)+' د.أ';
-function renderMenu(){const q=$('#search').value.trim();const items=menu.filter(x=>(category==='الكل'||category===x.group)&&x.name.includes(q));$('#menu-grid').innerHTML=items.map(x=>{const p=photos[x.group];return `<article class="food-card"><div class="food-art" style="--photo:url('assets/menu-${p[0]}.jpg');--size:${p[1]};--position:${p[2]}" aria-hidden="true"><span class="category-label">${x.group}</span></div><div class="card-body"><h3>${x.name}</h3><p>${x.note||'من منيو هُنا الروابي'}</p><div class="card-bottom"><span class="price">${x.price.toFixed(2)}<small>د.أ</small></span><button class="add" data-add="${x.id}" aria-label="أضف ${x.name} إلى الطلب">+</button></div></div></article>`}).join('');$('#empty').hidden=items.length>0;}
+function renderMenu(){const q=$('#search').value.trim();const items=dishes.filter(d=>(category==='الكل'||category===d.group)&&d.ids.some(id=>menu[id].name.includes(q)));$('#menu-grid').innerHTML=items.map(d=>{const x=menu[d.ids[0]];return `<article class="food-card"><div class="food-art" aria-hidden="true"><div class="dish-illustration" style="${artStyle(d.art)}"></div><span class="category-label">${d.group}</span></div><div class="card-body"><h3>${d.name}</h3>${d.ids.length>1?`<select class="dish-options" aria-label="خيارات ${d.name}">${d.ids.map(id=>`<option value="${id}">${menu[id].name} — ${money(menu[id].price)}</option>`).join('')}</select>`:`<p>${x.note||'من منيو هُنا الروابي'}</p>`}<div class="card-bottom"><span class="price">${x.price.toFixed(2)}<small>د.أ</small></span><button class="add" data-add="${x.id}" aria-label="أضف ${x.name} إلى الطلب">+</button></div></div></article>`}).join('');$('#empty').hidden=items.length>0;}
+$('#menu-grid').addEventListener('change',e=>{if(!e.target.matches('.dish-options'))return;const x=menu[Number(e.target.value)],card=e.target.closest('.food-card');card.querySelector('.price').innerHTML=`${x.price.toFixed(2)}<small>د.أ</small>`;const button=card.querySelector('.add');button.dataset.add=x.id;button.setAttribute('aria-label',`أضف ${x.name} إلى الطلب`);});
 $('#categories').innerHTML=groups.map((g,i)=>`<button class="${i===0?'active':''}" aria-pressed="${i===0}" data-category="${g}">${g}</button>`).join('');
 $('#categories').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b))});renderMenu()});$('#search').addEventListener('input',renderMenu);
 let toastTimer;$('#menu-grid').addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(!b)return;const id=Number(b.dataset.add);cart.set(id,(cart.get(id)||0)+1);renderCart();$('#toast').textContent=`أضفنا ${menu[id].name} لطلبك`;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').textContent='',2200)});
